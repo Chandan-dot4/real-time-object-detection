@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - College Group Project</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Font Awesome for crisp icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Top Navigation & Presentation Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="brand-icon"><i class="fa-solid fa-camera-viewfinder"></i></div>
+            <div class="brand-text">
+                <h1>{{ title }}</h1>
+                <p>{{ subtitle }} &bull; <span class="badge badge-accent">{{ version }}</span></p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-pill status-ready" id="statusPill">
+                <span class="status-dot"></span>
+                <span id="statusText">System Ready</span>
+            </div>
+            <div class="info-pill">
+                <i class="fa-solid fa-microchip"></i>
+                <span id="devicePill">CPU Optimized</span>
+            </div>
+            <div class="info-pill">
+                <i class="fa-solid fa-cube"></i>
+                <span id="modelPill">YOLO11n</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Left Sidebar: Controls & Video Source Selection -->
+        <aside class="control-panel">
+            <div class="panel-section">
+                <h3><i class="fa-solid fa-sliders"></i> Video Source Selection</h3>
+                
+                <div class="source-tabs">
+                    <button class="tab-btn active" data-source="youtube"><i class="fa-brands fa-youtube"></i> YouTube</button>
+                    <button class="tab-btn" data-source="sample"><i class="fa-solid fa-film"></i> Benchmark</button>
+                    <button class="tab-btn" data-source="local"><i class="fa-solid fa-upload"></i> Upload</button>
+                    <button class="tab-btn" data-source="webcam"><i class="fa-solid fa-video"></i> Webcam</button>
+                </div>
+
+                <!-- YouTube Input Panel -->
+                <div class="source-content" id="youtubeTab">
+                    <label for="ytUrlInput">YouTube Video URL:</label>
+                    <div class="input-group">
+                        <input type="text" id="ytUrlInput" placeholder="https://www.youtube.com/watch?v=..." value="https://www.youtube.com/watch?v=1EiC9bvVGnk">
+                    </div>
+                    <label for="ytPresetSelect">Or Select Curated Traffic Stream:</label>
+                    <select id="ytPresetSelect">
+                        <option value="">-- Choose Preset Demonstration --</option>
+                        {% for preset in preset_videos %}
+                        <option value="{{ preset.url }}">{{ preset.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Sample Benchmark Panel -->
+                <div class="source-content hidden" id="sampleTab">
+                    <div class="info-callout">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <strong>Intel IoT Traffic Benchmark:</strong>
+                            <p>Pre-loaded high-resolution traffic recording with cars, cyclists, and pedestrians for guaranteed offline demonstration.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Video Panel -->
+                <div class="source-content hidden" id="localTab">
+                    <label>Upload Traffic Video (MP4 / AVI):</label>
+                    <div class="file-drop-zone" id="dropZone">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <p>Drag & Drop video file here, or <span class="highlight">Browse</span></p>
+                        <input type="file" id="videoFileInput" accept="video/mp4,video/avi,video/mkv">
+                    </div>
+                    <div id="uploadStatus" class="upload-status hidden"></div>
+                </div>
+
+                <!-- Webcam Panel -->
+                <div class="source-content hidden" id="webcamTab">
+                    <label for="cameraIndex">Camera Device Index:</label>
+                    <select id="cameraIndex">
+                        <option value="0">Default Webcam (Device 0)</option>
+                        <option value="1">External USB Camera (Device 1)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Execution Action Buttons -->
+            <div class="panel-section">
+                <h3><i class="fa-solid fa-play"></i> Execution Controls</h3>
+                <div class="action-grid">
+                    <button class="btn btn-primary" id="btnStart"><i class="fa-solid fa-play"></i> Start Detection</button>
+                    <button class="btn btn-warning" id="btnPause" disabled><i class="fa-solid fa-pause"></i> Pause</button>
+                    <button class="btn btn-danger" id="btnStop" disabled><i class="fa-solid fa-stop"></i> Stop</button>
+                    <button class="btn btn-secondary" id="btnRecord"><i class="fa-solid fa-circle-dot"></i> Record MP4</button>
+                </div>
+            </div>
+
+            <!-- Detection Hyperparameters & Class Filter -->
+            <div class="panel-section">
+                <h3><i class="fa-solid fa-brain"></i> Model & Detection Settings</h3>
+                
+                <div class="control-row">
+                    <label for="modelSelect">YOLO Model:</label>
+                    <select id="modelSelect">
+                        <option value="yolo11n.pt" selected>YOLO11 Nano (Next-Gen SOTA)</option>
+                        <option value="yolov8n.pt">YOLOv8 Nano (Standard Benchmark)</option>
+                    </select>
+                </div>
+
+                <div class="control-row">
+                    <div class="label-with-val">
+                        <label for="confSlider">Confidence Threshold:</label>
+                        <span id="confValue">40%</span>
+                    </div>
+                    <input type="range" id="confSlider" min="15" max="90" value="40" step="5">
+                </div>
+
+                <div class="control-row">
+                    <label>Filter Target Classes:</label>
+                    <div class="class-tags-grid">
+                        <label class="tag-label"><input type="checkbox" class="cls-check" value="car" checked> <span class="color-dot" style="background:#ff8000"></span> Car</label>
+                        <label class="tag-label"><input type="checkbox" class="cls-check" value="bus" checked> <span class="color-dot" style="background:#00c8ff"></span> Bus</label>
+                        <label class="tag-label"><input type="checkbox" class="cls-check" value="truck" checked> <span class="color-dot" style="background:#32a0ff"></span> Truck</label>
+                        <label class="tag-label"><input type="checkbox" class="cls-check" value="motorcycle" checked> <span class="color-dot" style="background:#ff3296"></span> Bike</label>
+                        <label class="tag-label"><input type="checkbox" class="cls-check" value="bicycle" checked> <span class="color-dot" style="background:#00dc78"></span> Bicycle</label>
+                        <label class="tag-label"><input type="checkbox" class="cls-check" value="person" checked> <span class="color-dot" style="background:#1eff64"></span> Pedestrian</label>
+                        <label class="tag-label"><input type="checkbox" class="cls-check" value="traffic light" checked> <span class="color-dot" style="background:#00f0ff"></span> Signal</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Export Section -->
+            <div class="panel-section">
+                <h3><i class="fa-solid fa-file-export"></i> Reports & Data Export</h3>
+                <div class="export-buttons">
+                    <a href="/api/export/csv" class="btn btn-outline" id="btnExportCsv"><i class="fa-solid fa-file-csv"></i> Download Detection Log (CSV)</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Main Viewport: Video Feed & Real-Time Analytics -->
+        <main class="content-viewport">
+            
+            <!-- Live Video Stage -->
+            <div class="video-card">
+                <div class="video-header">
+                    <div class="video-title">
+                        <span class="live-dot" id="liveDot"></span>
+                        <strong id="videoTitleDisplay">Live Detection Feed</strong>
+                        <span class="source-tag" id="sourceTag">STANDBY</span>
+                    </div>
+                    <div class="video-meta">
+                        <span class="meta-item"><i class="fa-solid fa-gauge-high"></i> <span id="fpsBadge">0.0</span> FPS</span>
+                        <span class="meta-item"><i class="fa-solid fa-bolt"></i> <span id="latencyBadge">0.0</span> ms</span>
+                        <span class="meta-item recording-badge hidden" id="recordingIndicator"><i class="fa-solid fa-circle"></i> REC</span>
+                    </div>
+                </div>
+
+                <div class="video-frame-container">
+                    <img id="videoStream" src="/video_feed" alt="Video Feed" class="video-display">
+                </div>
+            </div>
+
+            <!-- KPI Metric Counters Grid -->
+            <div class="kpi-grid">
+                <div class="kpi-card highlight-card">
+                    <div class="kpi-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Total Unique Objects</span>
+                        <h2 class="kpi-number" id="kpiTotal">0</h2>
+                        <span class="kpi-sub">Cumulative Tracked</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon active-icon"><i class="fa-solid fa-eye"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Active in Frame</span>
+                        <h2 class="kpi-number" id="kpiActive">0</h2>
+                        <span class="kpi-sub">Current Objects</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card car-card">
+                    <div class="kpi-icon"><i class="fa-solid fa-car"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Cars Count</span>
+                        <h2 class="kpi-number" id="kpiCars">0</h2>
+                        <span class="kpi-sub">Active: <strong id="kpiCarsActive">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="kpi-card bus-card">
+                    <div class="kpi-icon"><i class="fa-solid fa-bus"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Buses & Coaches</span>
+                        <h2 class="kpi-number" id="kpiBuses">0</h2>
+                        <span class="kpi-sub">Active: <strong id="kpiBusesActive">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="kpi-card truck-card">
+                    <div class="kpi-icon"><i class="fa-solid fa-truck"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Trucks & Vans</span>
+                        <h2 class="kpi-number" id="kpiTrucks">0</h2>
+                        <span class="kpi-sub">Active: <strong id="kpiTrucksActive">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="kpi-card bike-card">
+                    <div class="kpi-icon"><i class="fa-solid fa-motorcycle"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Two-Wheelers</span>
+                        <h2 class="kpi-number" id="kpiBikes">0</h2>
+                        <span class="kpi-sub">Bikes & Cycles</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card ped-card">
+                    <div class="kpi-icon"><i class="fa-solid fa-person-walking"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Pedestrians</span>
+                        <h2 class="kpi-number" id="kpiPedestrians">0</h2>
+                        <span class="kpi-sub">Active: <strong id="kpiPedActive">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="kpi-card signal-card">
+                    <div class="kpi-icon"><i class="fa-solid fa-traffic-light"></i></div>
+                    <div class="kpi-content">
+                        <span class="kpi-label">Traffic Signals</span>
+                        <h2 class="kpi-number" id="kpiSignals">0</h2>
+                        <span class="kpi-sub">Tracked Lights</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lower Analytics & Real-Time Event Logs -->
+            <div class="analytics-row">
+                <!-- Class Distribution Bars -->
+                <div class="chart-card">
+                    <div class="card-head">
+                        <h4><i class="fa-solid fa-chart-pie"></i> Traffic Composition Breakdown</h4>
+                    </div>
+                    <div class="dist-container" id="distContainer">
+                        <div class="dist-row">
+                            <span class="dist-name"><i class="fa-solid fa-car"></i> Cars</span>
+                            <div class="progress-bar"><div class="fill fill-car" id="barCar" style="width: 0%"></div></div>
+                            <span class="dist-val" id="valCar">0%</span>
+                        </div>
+                        <div class="dist-row">
+                            <span class="dist-name"><i class="fa-solid fa-person-walking"></i> Pedestrians</span>
+                            <div class="progress-bar"><div class="fill fill-ped" id="barPed" style="width: 0%"></div></div>
+                            <span class="dist-val" id="valPed">0%</span>
+                        </div>
+                        <div class="dist-row">
+                            <span class="dist-name"><i class="fa-solid fa-bus"></i> Buses</span>
+                            <div class="progress-bar"><div class="fill fill-bus" id="barBus" style="width: 0%"></div></div>
+                            <span class="dist-val" id="valBus">0%</span>
+                        </div>
+                        <div class="dist-row">
+                            <span class="dist-name"><i class="fa-solid fa-truck"></i> Trucks</span>
+                            <div class="progress-bar"><div class="fill fill-truck" id="barTruck" style="width: 0%"></div></div>
+                            <span class="dist-val" id="valTruck">0%</span>
+                        </div>
+                        <div class="dist-row">
+                            <span class="dist-name"><i class="fa-solid fa-motorcycle"></i> Two-Wheelers</span>
+                            <div class="progress-bar"><div class="fill fill-bike" id="barBike" style="width: 0%"></div></div>
+                            <span class="dist-val" id="valBike">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Detection Event Table -->
+                <div class="logs-card">
+                    <div class="card-head">
+                        <h4><i class="fa-solid fa-list-check"></i> Real-Time Detection & Tracking Log</h4>
+                        <span class="badge badge-subtle" id="logCount">0 Events</span>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="logs-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Frame</th>
+                                    <th>Track ID</th>
+                                    <th>Class</th>
+                                    <th>Confidence</th>
+                                    <th>Centroid (X,Y)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <tr>
+                                    <td colspan="6" class="empty-state">No detections recorded yet. Start detection to view live log stream.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- College Project Architecture Footer -->
+            <footer class="app-footer">
+                <div class="footer-pipeline">
+                    <strong>Image Processing Pipeline:</strong>
+                    <span>1. Stream Input</span> &rarr;
+                    <span>2. Frame Extraction</span> &rarr;
+                    <span>3. Spatial Preprocessing</span> &rarr;
+                    <span>4. YOLOv8/11 Tensor Inference</span> &rarr;
+                    <span>5. Non-Maximum Suppression</span> &rarr;
+                    <span>6. Centroid & IoU Multi-Object Tracking</span> &rarr;
+                    <span>7. Persistent Trajectory Mapping</span> &rarr;
+                    <span>8. Heads-Up Display Telemetry</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
+

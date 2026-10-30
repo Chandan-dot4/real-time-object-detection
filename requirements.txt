@@ -1,0 +1,20 @@
+# Project Requirements for Real-Time Object Detection and Recognition System
+# College Group Project Specification
+
+# Core Computer Vision & Deep Learning
+opencv-python>=4.8.0
+ultralytics>=8.2.0
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.23.0
+pillow>=9.0.0
+
+# Video Streaming & YouTube Stream Ingestion
+yt-dlp>=2024.0.0
+requests>=2.28.0
+
+# Web Dashboard & REST Services
+Flask>=3.0.0
+Werkzeug>=3.0.0
+Jinja2>=3.1.0
+
